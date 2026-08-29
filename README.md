@@ -44,25 +44,35 @@ dist/
 The generator excludes `.obsidian/` and `progress.md` by default. Progress files
 contain personal learning history and should not be published accidentally.
 
-## Cloudflare Pages
+## Cloudflare deployment
 
-Create a Cloudflare Pages project connected to this GitHub repository with:
+Import this GitHub repository as a new Cloudflare Workers & Pages project. The
+site is deployed as static Worker assets, so no Worker source entrypoint is
+required.
 
+Use these build settings:
+
+- **Project name:** `adaptive-learning-courses`
+- **Production branch:** `main`
 - **Root directory:** `/`
 - **Build command:** `npm run generate`
-- **Build output directory:** `dist`
-- **Node.js version:** `22`
+- **Deploy command:** `npm run deploy`
+- **Version command:** `npm run version:upload`
 
-After the first setup, every push to `main` regenerates and deploys the site.
+Select **Create new token** in the build configuration and keep that generated
+build token assigned to this project. Do not add `CLOUDFLARE_API_TOKEN` as a
+build variable.
 
-For a manual deployment, authenticate Wrangler and run:
+For a manual deployment from an authenticated terminal:
 
 ```bash
+npm ci
 npm run generate
-npx wrangler pages deploy dist --project-name=adaptive-learning-courses
+npm run deploy
 ```
 
-The included `wrangler.toml` points Wrangler at the generated `dist/` directory.
+The included `wrangler.toml` deploys `dist/` as static assets and serves the
+generated `404.html` for missing routes.
 
 ## Publishing rules
 

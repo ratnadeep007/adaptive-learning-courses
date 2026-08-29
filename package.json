@@ -5,9 +5,14 @@
   "description": "Static publisher for adaptive-learning Markdown courses.",
   "type": "module",
   "scripts": {
-    "generate": "node scripts/generate.mjs"
+    "generate": "node scripts/generate.mjs",
+    "deploy": "wrangler deploy",
+    "version:upload": "wrangler versions upload"
   },
   "dependencies": {
     "marked": "^16.3.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.127.1"
   }
 }
