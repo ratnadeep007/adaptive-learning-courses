@@ -148,12 +148,17 @@ a:hover { color: #99f6e4; }
 .breadcrumbs a { color: var(--muted); }
 .layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 3.5rem; align-items: start; }
 .sidebar { position: sticky; top: 1.5rem; }
+.sidebar-mobile { display: none; }
 .sidebar-label { color: var(--muted); font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; }
 .sidebar h2 { margin: .35rem 0 1rem; font-size: 1rem; }
 .sidebar ul { list-style: none; padding: 0; margin: 0; display: grid; gap: .35rem; }
 .sidebar a { display: block; padding: .35rem .5rem; border-radius: .35rem; color: var(--muted); text-decoration: none; font-size: .9rem; }
 .sidebar a:hover, .sidebar a[aria-current="page"] { background: var(--accent-soft); color: var(--accent); }
 .sidebar-note { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border); color: var(--muted); font-size: .8rem; }
+ .sidebar-mobile summary { cursor: pointer; list-style: none; color: var(--text); font-weight: 650; }
+ .sidebar-mobile summary::-webkit-details-marker { display: none; }
+ .sidebar-mobile summary::after { content: "+"; float: right; color: var(--accent); font-size: 1.2rem; line-height: 1; }
+ .sidebar-mobile[open] summary::after { content: "−"; }
 .content { min-width: 0; }
 .content > h1:first-child { margin-top: 0; }
 .content h1, .content h2, .content h3, .content h4 { color: var(--text); line-height: 1.2; letter-spacing: -.025em; }
@@ -185,11 +190,19 @@ a:hover { color: #99f6e4; }
 .page-nav small { display: block; color: var(--muted); margin-bottom: .2rem; }
 .site-footer { max-width: var(--max); margin: 0 auto; padding: 1rem 1.25rem 2.5rem; color: var(--muted); font-size: .8rem; }
 @media (max-width: 760px) {
-  .page-shell { padding-top: 1.5rem; }
-  .layout { grid-template-columns: 1fr; gap: 1.5rem; }
-  .sidebar { position: static; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
-  .sidebar ul { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
-  .content h1 { font-size: 2.25rem; }
+  .page-shell { padding: 1.5rem 1rem 3rem; }
+  .layout { grid-template-columns: 1fr; gap: 1rem; }
+  .sidebar { position: static; min-width: 0; padding-bottom: 0; border-bottom: 1px solid var(--border); }
+  .sidebar-desktop { display: none; }
+  .sidebar-mobile { display: block; padding: .8rem 0; }
+  .sidebar-mobile summary { padding: .25rem 0; }
+  .sidebar-mobile ul { grid-template-columns: 1fr; margin-top: .75rem; }
+  .sidebar-mobile a { padding: .55rem .6rem; overflow-wrap: anywhere; }
+  .sidebar-mobile .sidebar-note { margin-top: 1rem; }
+  .content { min-width: 0; }
+  .content h1 { font-size: 2.25rem; overflow-wrap: anywhere; }
+  .content h2 { font-size: 1.35rem; }
+  .content table { display: block; overflow-x: auto; white-space: nowrap; }
 }
 `;
 
@@ -227,7 +240,8 @@ function courseSidebar(course, current, pages) {
     .map((page) => `<li><a href="${relativeHref(current.route, page.route)}"${page.route === current.route ? ' aria-current="page"' : ""}>${escapeHtml(page.navTitle)}</a></li>`)
     .join("\n");
   const graph = course.hasGraph ? `<p class="sidebar-note"><a href="${relativeHref(current.route, `/${course.slug}/graph.html`)}">Open learning graph</a></p>` : "";
-  return `<div class="sidebar-label">Course</div><h2>${escapeHtml(course.title)}</h2><ul>${links}</ul>${graph}`;
+  const navigation = `<div class="sidebar-label">Course</div><h2>${escapeHtml(course.title)}</h2><ul>${links}</ul>${graph}`;
+  return `<div class="sidebar-desktop">${navigation}</div><details class="sidebar-mobile"><summary>Course navigation</summary>${navigation}</details>`;
 }
 
 async function buildCourse(courseEntry) {
