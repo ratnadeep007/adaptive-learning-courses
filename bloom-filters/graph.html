@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Bloom Filters — Learning Graph</title>
+<style>
+  :root{
+    --bg:#0b1118; --panel:#101a28; --node:#141f2e; --line:#2c3e57;
+    --edge:#41587a; --edge-hot:#5eead4; --accent:#34d399; --accent2:#5eead4;
+    --text:#e8eef7; --muted:#8fa1b8; --dim:#5b6c84;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%}
+  body{
+    background:
+      radial-gradient(1100px 560px at 72% -10%, rgba(52,211,153,.09), transparent 60%),
+      radial-gradient(900px 500px at -5% 112%, rgba(94,234,212,.06), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:ui-sans-serif,-apple-system,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding:26px 30px 18px;
+  }
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  h1{font-size:22px;margin:0;letter-spacing:-.02em;font-weight:650}
+  .sub{color:var(--muted);font-size:13px;margin-top:5px}
+  .sub b{color:var(--text);font-weight:600}
+  .head-right{display:flex;align-items:center;gap:14px}
+  .badge{
+    display:inline-flex;align-items:center;gap:7px;
+    border:1px solid rgba(52,211,153,.4);background:rgba(52,211,153,.09);
+    color:#a7f3d0;font-size:12px;font-weight:600;letter-spacing:.02em;
+    padding:6px 11px;border-radius:999px;
+  }
+  .badge .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px rgba(52,211,153,.9)}
+  .legend{display:flex;gap:8px;align-items:center;color:var(--dim);font-size:11.5px}
+  .legend .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);display:inline-block;box-shadow:0 0 6px rgba(52,211,153,.8)}
+  .graph-wrap{position:relative;margin-top:14px}
+  svg{width:100%;height:auto;display:block}
+  .edge{fill:none;stroke:var(--edge);stroke-width:1.6;transition:stroke .15s}
+  .edge.hot{stroke:var(--edge-hot);stroke-width:2.4;marker-end:url(#arrowHot)}
+  .node{cursor:pointer}
+  .node .body{fill:var(--node);stroke:var(--line);stroke-width:1.4;transition:stroke .15s, fill .15s}
+  .node:hover .body, .node.hot .body{stroke:var(--accent2);fill:#17243a}
+  .node .nid{font:600 10px ui-monospace,SFMono-Regular,Menlo,monospace;fill:var(--accent);letter-spacing:.08em}
+  .node .ttl{font:600 13px ui-sans-serif,-apple-system,"Segoe UI",sans-serif;fill:var(--text)}
+  .node .sdot{fill:var(--accent)}
+  .foot{margin-top:10px;color:var(--dim);font-size:11.5px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  #tip{
+    position:absolute;z-index:10;width:348px;max-width:46vw;
+    background:linear-gradient(180deg,#121d2e,#0e1725);
+    border:1px solid #263852;border-radius:14px;
+    padding:15px 17px 13px;
+    box-shadow:0 24px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(94,234,212,.05) inset;
+    pointer-events:none;
+  }
+  #tip[hidden]{display:none}
+  .tip-head{display:flex;align-items:baseline;gap:9px;margin-bottom:9px}
+  .tip-id{font:700 11px ui-monospace,Menlo,monospace;color:var(--accent2);letter-spacing:.1em}
+  .tip-title{font-size:15px;font-weight:650;letter-spacing:-.01em}
+  .tip-goal{font-size:12.5px;color:var(--muted);line-height:1.45;margin-bottom:9px}
+  .tip-goal b, .tip-model b{color:#c7d3e3;font-weight:600}
+  .tip-model{
+    font-size:12px;line-height:1.45;color:#9fd8c8;
+    border-left:2px solid rgba(94,234,212,.55);
+    background:rgba(94,234,212,.06);
+    padding:7px 10px;border-radius:0 8px 8px 0;margin-bottom:10px;
+  }
+  .tip-points{margin:0;padding:0 0 0 16px;display:grid;gap:5px}
+  .tip-points li{font-size:12px;line-height:1.45;color:#c3cfe0}
+  .tip-foot{
+    margin-top:11px;padding-top:9px;border-top:1px solid #223349;
+    font-size:11px;color:var(--dim);display:flex;gap:14px;flex-wrap:wrap;
+  }
+  .tip-foot .k{color:#7f93ad;font-weight:600;margin-right:5px}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Bloom Filters — Learning Graph</h1>
+    <div class="sub"><b>8 nodes</b> + course synthesis · prerequisite edges flow left → right · hover any node for its contents</div>
+  </div>
+  <div class="head-right">
+    <div class="badge"><span class="dot"></span>8/8 mastered · complete</div>
+  </div>
+</header>
+
+<div class="graph-wrap" id="wrap">
+  <svg viewBox="0 0 1340 560" role="img" aria-label="Bloom filters learning graph">
+    <defs>
+      <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="#4a617f"/>
+      </marker>
+      <marker id="arrowHot" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="#5eead4"/>
+      </marker>
+    </defs>
+
+    <!-- edges -->
+    <g id="edges">
+      <path class="edge" data-src="N01" data-tgt="N02" d="M175,280 L215,280" marker-end="url(#arrow)"/>
+      <path class="edge" data-src="N02" data-tgt="N03" d="M365,272 C390,272 380,134 405,134" marker-end="url(#arrow)"/>
+      <path class="edge" data-src="N02" data-tgt="N05" d="M365,288 C390,288 380,430 405,430" marker-end="url(#arrow)"/>
+      <path class="edge" data-src="N03" data-tgt="N04" d="M555,134 C580,134 570,272 595,272" marker-end="url(#arrow)"/>
+      <path class="edge" data-src="N05" data-tgt="N04" d="M555,430 C580,430 570,288 595,288" marker-end="url(#arrow)"/>
+      <path class="edge" data-src="N04" data-tgt="N06" d="M745,280 L785,280" marker-end="url(#arrow)"/>
+      <path class="edge" data-src="N05" data-tgt="N06" d="M555,436 C680,520 690,350 785,288" marker-end="url(#arrow)"/>
+      <path class="edge" data-src="N04" data-tgt="N08" d="M745,292 C830,470 880,448 975,430" marker-end="url(#arrow)"/>
+      <path class="edge" data-src="N06" data-tgt="N07" d="M935,272 C960,272 950,134 975,134" marker-end="url(#arrow)"/>
+      <path class="edge" data-src="N06" data-tgt="N08" d="M935,288 C960,288 950,430 975,430" marker-end="url(#arrow)"/>
+      <path class="edge" data-src="N07" data-tgt="SYN" d="M1125,134 C1150,134 1140,280 1165,280" marker-end="url(#arrow)"/>
+      <path class="edge" data-src="N08" data-tgt="SYN" d="M1125,430 C1150,430 1140,280 1165,280" marker-end="url(#arrow)"/>
+    </g>
+
+    <!-- nodes -->
+    <g id="nodes">
+      <g class="node" data-id="N01" transform="translate(25,248)">
+        <rect class="body" width="150" height="64" rx="13"/>
+        <text class="nid" x="13" y="20">N01</text>
+        <circle class="sdot" cx="134" cy="15" r="4"/>
+        <text class="ttl" x="13" y="40">Membership</text>
+        <text class="ttl" x="13" y="55">guarantees</text>
+      </g>
+      <g class="node" data-id="N02" transform="translate(215,248)">
+        <rect class="body" width="150" height="64" rx="13"/>
+        <text class="nid" x="13" y="20">N02</text>
+        <circle class="sdot" cx="134" cy="15" r="4"/>
+        <text class="ttl" x="13" y="40">Bits &amp; hash</text>
+        <text class="ttl" x="13" y="55">positions</text>
+      </g>
+      <g class="node" data-id="N03" transform="translate(405,102)">
+        <rect class="body" width="150" height="64" rx="13"/>
+        <text class="nid" x="13" y="20">N03</text>
+        <circle class="sdot" cx="134" cy="15" r="4"/>
+        <text class="ttl" x="13" y="40">False-positive</text>
+        <text class="ttl" x="13" y="55">probability</text>
+      </g>
+      <g class="node" data-id="N05" transform="translate(405,398)">
+        <rect class="body" width="150" height="64" rx="13"/>
+        <text class="nid" x="13" y="20">N05</text>
+        <circle class="sdot" cx="134" cy="15" r="4"/>
+        <text class="ttl" x="13" y="40">Insertion &amp; query</text>
+        <text class="ttl" x="13" y="55">algorithms</text>
+      </g>
+      <g class="node" data-id="N04" transform="translate(595,248)">
+        <rect class="body" width="150" height="64" rx="13"/>
+        <text class="nid" x="13" y="20">N04</text>
+        <circle class="sdot" cx="134" cy="15" r="4"/>
+        <text class="ttl" x="13" y="40">Parameter</text>
+        <text class="ttl" x="13" y="55">sizing</text>
+      </g>
+      <g class="node" data-id="N06" transform="translate(785,248)">
+        <rect class="body" width="150" height="64" rx="13"/>
+        <text class="nid" x="13" y="20">N06</text>
+        <circle class="sdot" cx="134" cy="15" r="4"/>
+        <text class="ttl" x="13" y="40">Operational</text>
+        <text class="ttl" x="13" y="55">trade-offs</text>
+      </g>
+      <g class="node" data-id="N07" transform="translate(975,102)">
+        <rect class="body" width="150" height="64" rx="13"/>
+        <text class="nid" x="13" y="20">N07</text>
+        <circle class="sdot" cx="134" cy="15" r="4"/>
+        <text class="ttl" x="13" y="40">Variants &amp;</text>
+        <text class="ttl" x="13" y="55">deletion</text>
+      </g>
+      <g class="node" data-id="N08" transform="translate(975,398)">
+        <rect class="body" width="150" height="64" rx="13"/>
+        <text class="nid" x="13" y="20">N08</text>
+        <circle class="sdot" cx="134" cy="15" r="4"/>
+        <text class="ttl" x="13" y="40">End-to-end</text>
+        <text class="ttl" x="13" y="55">design</text>
+      </g>
+      <g class="node" data-id="SYN" transform="translate(1165,248)">
+        <rect class="body" width="150" height="64" rx="13" style="stroke:rgba(94,234,212,.55)"/>
+        <text class="nid" x="13" y="20" style="fill:var(--accent2)">★</text>
+        <circle class="sdot" cx="134" cy="15" r="4"/>
+        <text class="ttl" x="13" y="40">Course</text>
+        <text class="ttl" x="13" y="55">synthesis</text>
+      </g>
+    </g>
+  </svg>
+
+  <div id="tip" hidden></div>
+</div>
+
+<div class="foot">
+  <span>● mastered (all nodes) — prerequisite edges · next reviews 2026-08-18 → 2026-08-20</span>
+  <span>source: bloom-filters/ · hover a node for objective, mental model &amp; key points</span>
+</div>
+
+<script>
+const DATA = {
+  N01: {
+    title: "Membership guarantees",
+    goal: "Distinguish what a Bloom filter can prove from what it can only suggest.",
+    model: "One-sided gate: <b>absent</b> is a proof; <b>present</b> is a lead.",
+    points: [
+      "A negative result proves absence → safely skip the expensive lookup.",
+      "A positive result only means “possibly present” → verify against the authoritative store.",
+      "It is never a replacement for the authoritative set."
+    ],
+    prereq: "none", enables: "N02, N06", review: "2026-08-20"
+  },
+  N02: {
+    title: "Bits and hash positions",
+    goal: "Trace how a value maps to bit positions during insertion and membership queries.",
+    model: "An m-cell light board: k independent hashes each point at one cell.",
+    points: [
+      "Insert turns on all k selected bits; a query returns absent on the first 0 bit, else possibly present.",
+      "The filter stores bits only — no values, no hash outputs.",
+      "Example: m=10, k=3 — cat→{1,4,8}; dog→{1,4,6} is definitely absent (bit 6 is 0)."
+    ],
+    prereq: "N01", enables: "N03, N05", review: "2026-08-18"
+  },
+  N03: {
+    title: "False-positive probability",
+    goal: "Estimate how bit occupancy determines the false-positive rate.",
+    model: "A false positive needs all k queried lights to already be on.",
+    points: [
+      "P(bit = 0) ≈ e^(−kn/m), so p ≈ (1 − e^(−kn/m))^k.",
+      "The rate depends on both item count n and bit budget m.",
+      "More hashes are not always better; p rises as n grows past m, k."
+    ],
+    prereq: "N02", enables: "N04", review: "2026-08-18"
+  },
+  N04: {
+    title: "Parameter sizing",
+    goal: "Select bit count m and hash count k from an expected item count n and target rate p.",
+    model: "Memory buys lower occupancy; k balances thorough marking against overfilling.",
+    points: [
+      "m ≈ −n·ln(p) / (ln 2)² bits and k ≈ (m/n)·ln 2 hashes.",
+      "Optimal k sits near ~50% bit occupancy.",
+      "If actual n exceeds design n, p rises → resize or layer a new filter."
+    ],
+    prereq: "N03", enables: "N06, N08", review: "2026-08-20"
+  },
+  N05: {
+    title: "Insertion and query algorithms",
+    goal: "State correct insertion and query algorithms and their time and space costs.",
+    model: "Insert = bitwise OR across k positions; query = bitwise AND of all-set.",
+    points: [
+      "Each operation is O(k) hash/bit work; the structure occupies m bits.",
+      "A query may short-circuit on the first 0 bit; an insert must set every bit.",
+      "Insert and query must use the same hashing and position mapping."
+    ],
+    prereq: "N02", enables: "N06", review: "2026-08-20"
+  },
+  N06: {
+    title: "Operational trade-offs",
+    goal: "Decide when a Bloom filter is appropriate and where it belongs in a system path.",
+    model: "A cheap front desk before an authoritative, costly back office.",
+    points: [
+      "Wins when many queries are negative and the authoritative check is costly (disk, network, compute).",
+      "A positive must still be validated; a high FP rate can make it pure overhead.",
+      "Budget: memory, target p, growth, rebuild strategy, occupancy observability. A stale filter breaks safe negatives."
+    ],
+    prereq: "N04, N05", enables: "N07, N08", review: "2026-08-18"
+  },
+  N07: {
+    title: "Variants and deletion",
+    goal: "Explain why ordinary Bloom filters cannot delete safely and identify suitable variants.",
+    model: "A plain bit can’t record who set it; a counter can record how many items contributed.",
+    points: [
+      "Clearing a shared bit can erase evidence another item needs → false negatives.",
+      "Counting filter: insert increments, delete decrements each selected counter.",
+      "Scalable filters add layers as the set grows; counters cost extra memory; FPs remain possible."
+    ],
+    prereq: "N06", enables: "N08", review: "2026-08-18"
+  },
+  N08: {
+    title: "End-to-end design",
+    goal: "Design a Bloom-filter-backed lookup path with explicit correctness and capacity constraints.",
+    model: "Specify the gate, its error budget, and the authoritative path behind it.",
+    points: [
+      "Define: authoritative store, expected cardinality, target p, update/deletion semantics, rebuild/scaling, behavior when unavailable.",
+      "A negative is a safe skip only when the filter is complete and current for the relevant set.",
+      "Otherwise fall back to the authoritative lookup (e.g. one filter per immutable segment)."
+    ],
+    prereq: "N04, N06", enables: "final synthesis", review: "2026-08-20"
+  },
+  SYN: {
+    title: "Course synthesis",
+    goal: "Combine sizing, validity conditions, and authoritative verification into one design.",
+    model: "Mastered — the full path from guarantees to a production prefilter.",
+    points: [
+      "Pick m and k from expected n and a target false-positive budget.",
+      "Trust negatives only when the filter is complete and current; stale → fall back.",
+      "Every positive is verified against the source of truth."
+    ],
+    prereq: "N07, N08", enables: "—", review: "2026-08-20"
+  }
+};
+
+const tip = document.getElementById("tip");
+const wrap = document.getElementById("wrap");
+
+function renderTip(id){
+  const d = DATA[id];
+  tip.innerHTML =
+    '<div class="tip-head"><span class="tip-id">' + (id === "SYN" ? "SYN" : id) + '</span><span class="tip-title">' + d.title + '</span></div>' +
+    '<div class="tip-goal"><b>Objective:</b> ' + d.goal + '</div>' +
+    '<div class="tip-model"><b>Mental model:</b> ' + d.model + '</div>' +
+    '<ul class="tip-points">' + d.points.map(p => '<li>' + p + '</li>').join('') + '</ul>' +
+    '<div class="tip-foot">' +
+      '<span><span class="k">requires</span>' + d.prereq + '</span>' +
+      '<span><span class="k">enables</span>' + d.enables + '</span>' +
+      '<span><span class="k">review</span>' + d.review + '</span>' +
+    '</div>';
+}
+
+function placeTip(g){
+  const nr = g.querySelector(".body").getBoundingClientRect();
+  const wr = wrap.getBoundingClientRect();
+  const x = nr.left - wr.left, y = nr.top - wr.top, w = nr.width;
+  const tw = tip.offsetWidth, th = tip.offsetHeight;
+  let left = x + w + 14;
+  if (left + tw > wr.width - 6) left = x - tw - 14;
+  let top = Math.max(6, Math.min(y - 8, wr.height - th - 6));
+  tip.style.left = left + "px";
+  tip.style.top = top + "px";
+}
+
+document.querySelectorAll(".node").forEach(g => {
+  const id = g.dataset.id;
+  const hotEdges = () => document.querySelectorAll('.edge[data-src="' + id + '"], .edge[data-tgt="' + id + '"]');
+  g.addEventListener("mouseenter", () => {
+    renderTip(id);
+    tip.hidden = false;
+    placeTip(g);
+    hotEdges().forEach(e => e.classList.add("hot"));
+  });
+  g.addEventListener("mouseleave", () => {
+    tip.hidden = true;
+    hotEdges().forEach(e => e.classList.remove("hot"));
+  });
+});
+</script>
+</body>
+</html>
