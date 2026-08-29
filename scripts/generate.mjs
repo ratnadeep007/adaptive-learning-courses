@@ -85,10 +85,10 @@ function slugLabel(relative) {
 
 function relativeHref(fromRoute, toRoute) {
   const fromDirectory = fromRoute.endsWith("/") ? fromRoute : `${fromRoute}/`;
-  let href = path.posix.relative(fromDirectory, toRoute);
+  const href = path.posix.relative(fromDirectory, toRoute);
   if (!href) return "./";
-  if (!href.endsWith("/")) href += "/";
-  return href;
+  if (toRoute.endsWith(".html")) return href;
+  return href.endsWith("/") ? href : `${href}/`;
 }
 
 function transformWikiLinks(markdown, current, routeMap) {
