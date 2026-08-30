@@ -2,7 +2,7 @@
 id: N07
 status: mastered
 prerequisites: [N06]
-next-review: 2026-08-18
+next-review: 2026-09-09
 ---
 
 # Variants and deletion

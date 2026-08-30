@@ -2,7 +2,7 @@
 id: N06
 status: mastered
 prerequisites: [N04, N05]
-next-review: 2026-08-18
+next-review: 2026-09-09
 ---
 
 # Operational trade-offs

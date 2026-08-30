@@ -2,7 +2,7 @@
 id: N05
 status: mastered
 prerequisites: [N02]
-next-review: 2026-08-20
+next-review: 2026-09-09
 ---
 
 # Insertion and query algorithms

@@ -2,7 +2,7 @@
 id: N03
 status: mastered
 prerequisites: [N02]
-next-review: 2026-08-18
+next-review: 2026-09-09
 ---
 
 # False-positive probability

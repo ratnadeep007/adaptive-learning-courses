@@ -2,7 +2,7 @@
 id: N01
 status: mastered
 prerequisites: []
-next-review: 2026-08-20
+next-review: 2026-09-09
 ---
 
 # Membership guarantees

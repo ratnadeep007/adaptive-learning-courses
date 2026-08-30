@@ -2,7 +2,7 @@
 id: N02
 status: mastered
 prerequisites: [N01]
-next-review: 2026-08-18
+next-review: 2026-09-09
 ---
 
 # Bits and hash positions

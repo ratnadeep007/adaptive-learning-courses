@@ -2,7 +2,7 @@
 id: N08
 status: mastered
 prerequisites: [N04, N06]
-next-review: 2026-08-20
+next-review: 2026-09-09
 ---
 
 # End-to-end design

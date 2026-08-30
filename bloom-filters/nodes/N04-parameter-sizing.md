@@ -2,7 +2,7 @@
 id: N04
 status: mastered
 prerequisites: [N03]
-next-review: 2026-08-20
+next-review: 2026-09-09
 ---
 
 # Parameter sizing
